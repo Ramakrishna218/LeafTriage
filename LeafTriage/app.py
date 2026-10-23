@@ -3,6 +3,9 @@ import streamlit as st
 from PIL import Image
 from supabase import create_client, Client
 from predict import load_model_and_labels, predict_image
+import socket
+from urllib.parse import urlparse
+
 
 st.set_page_config(
     page_title="LeafTriage",
@@ -41,6 +44,17 @@ st.info(
 )
 
 # Connect to Supabase
+
+url = st.secrets["SUPABASE_URL"]
+host = urlparse(url).hostname
+
+try:
+    result = socket.getaddrinfo(host, 443)
+    st.success(f"Hostname resolves successfully: {host}")
+except socket.gaierror as exc:
+    st.error(f"DNS lookup failed for {host}: {exc}")
+
+
 try:
     db = get_supabase()
     crops = fetch_rows(
@@ -219,3 +233,5 @@ try:
 
 except Exception as exc:
     st.error(f"Could not load the prediction model: {exc}")
+
+
