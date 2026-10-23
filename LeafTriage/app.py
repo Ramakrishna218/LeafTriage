@@ -43,9 +43,7 @@ def show_value(title, value):
 
 st.title("🌿 LeafTriage")
 st.write("Crop growing guidance and AI-assisted tomato leaf triage.")
-st.info(
-    "AI predictions are preliminary. They are not confirmed diagnoses."
-)
+
 
 # Connect to Supabase
 
