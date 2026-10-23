@@ -54,14 +54,13 @@ host = urlparse(url).hostname
 
 try:
     result = socket.getaddrinfo(host, 443)
-    st.success(f"Hostname resolves successfully: {host}")
+   
 except socket.gaierror as exc:
     st.error(f"DNS lookup failed for {host}: {exc}")
 
 url = st.secrets["SUPABASE_URL"].strip().rstrip("/")
 host = urlparse(url).hostname
 
-st.write("Configured hostname:", host)
 
 try:
     response = requests.get(
@@ -72,8 +71,7 @@ try:
         },
         timeout=15,
     )
-    st.write("HTTP status:", response.status_code)
-    st.write("Response:", response.text[:500])
+   
 except Exception as exc:
     st.error(f"Direct API test failed: {type(exc).__name__}: {exc}")
 
