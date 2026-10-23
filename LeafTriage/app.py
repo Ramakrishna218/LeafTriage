@@ -14,24 +14,27 @@ st.set_page_config(
     layout="wide"
 )
 
-@st.cache_resource
-def get_supabase():
-    return create_client(
-        st.secrets["SUPABASE_URL"],
-        st.secrets["SUPABASE_KEY"]
-    )
 
 @st.cache_resource
 def get_model():
     return load_model_and_labels()
 
-def fetch_rows(table, query):
-    try:
-        response = query.execute()
-        return response.data or []
-    except Exception as exc:
-        st.error(f"Could not load {table}: {exc}")
-        return []
+def fetch_rows(table, params=None):
+    base_url = st.secrets["SUPABASE_URL"].strip().rstrip("/")
+    api_key = st.secrets["SUPABASE_KEY"]
+
+    response = requests.get(
+        f"{base_url}/rest/v1/{table}",
+        headers={
+            "apikey": api_key,
+            "Authorization": f"Bearer {api_key}",
+        },
+        params=params or {"select": "*"},
+        timeout=20,
+    )
+    response.raise_for_status()
+    return response.json()
+
 
 def show_value(title, value):
     if value:
@@ -76,16 +79,9 @@ except Exception as exc:
 
 
 try:
-    db = get_supabase()
-    crops = fetch_rows(
-        "crops",
-        db.table("crops").select("*").order("id")
-    )
+    crops = fetch_rows("crops", {"select": "*", "order": "id"})
 except Exception as exc:
-    st.error(
-        "Database connection failed. Check your Streamlit Secrets "
-        f"and Supabase settings. Details: {exc}"
-    )
+    st.error(f"Could not load crops: {exc}")
     st.stop()
 
 if not crops:
