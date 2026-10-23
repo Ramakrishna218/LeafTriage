@@ -5,6 +5,7 @@ from supabase import create_client, Client
 from predict import load_model_and_labels, predict_image
 import socket
 from urllib.parse import urlparse
+import requests
 
 
 st.set_page_config(
@@ -53,6 +54,25 @@ try:
     st.success(f"Hostname resolves successfully: {host}")
 except socket.gaierror as exc:
     st.error(f"DNS lookup failed for {host}: {exc}")
+
+url = st.secrets["SUPABASE_URL"].strip().rstrip("/")
+host = urlparse(url).hostname
+
+st.write("Configured hostname:", host)
+
+try:
+    response = requests.get(
+        f"{url}/rest/v1/crops?select=id&limit=1",
+        headers={
+            "apikey": st.secrets["SUPABASE_KEY"],
+            "Authorization": f"Bearer {st.secrets['SUPABASE_KEY']}",
+        },
+        timeout=15,
+    )
+    st.write("HTTP status:", response.status_code)
+    st.write("Response:", response.text[:500])
+except Exception as exc:
+    st.error(f"Direct API test failed: {type(exc).__name__}: {exc}")
 
 
 try:
