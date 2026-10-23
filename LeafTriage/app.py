@@ -118,11 +118,9 @@ if selected_id:
         show_value("About this crop", selected.get("description"))
 
         guides = fetch_rows(
-            "planting guides",
-            db.table("planting_guides")
-            .select("*")
-            .eq("crop_id", selected_id)
-        )
+    "planting_guides",
+    {"select": "*", "crop_id": f"eq.{selected_id}"}
+)
 
         if guides:
             guide = guides[0]
@@ -160,11 +158,9 @@ if selected_id:
             )
 
         fertilizer_rows = fetch_rows(
-            "fertilizer guides",
-            db.table("fertilizer_guides")
-            .select("*")
-            .eq("crop_id", selected_id)
-        )
+    "fertilizer_guides",
+    {"select": "*", "crop_id": f"eq.{selected_id}"}
+)
 
         st.subheader("🧪 Fertilizer guidance")
 
@@ -186,11 +182,9 @@ if selected_id:
             )
 
         disease_rows = fetch_rows(
-            "disease guides",
-            db.table("disease_guides")
-            .select("*")
-            .eq("crop_id", selected_id)
-        )
+    "disease_guides",
+    {"select": "*", "crop_id": f"eq.{selected_id}"}
+)
 
         st.subheader("🍃 Disease information")
 
