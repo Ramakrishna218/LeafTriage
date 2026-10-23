@@ -221,64 +221,61 @@ try:
         image = Image.open(uploaded).convert("RGB")
         st.image(image, caption="Selected leaf", use_container_width=True)
 
-        DISEASE_NAMES = {
-    "early blight": "Early Blight of Tomato (Alternaria solani)",
-    "late blight": "Late Blight of Tomato (Phytophthora infestans)",
-    "healthy": "Healthy Tomato Leaf"
-}
+        if st.button("Analyze leaf", type="primary"):
+            predictions = predict_image(image, model, labels)
 
-       if st.button("Analyze leaf", type="primary"):
-    predictions = predict_image(image, model, labels)
+            if predictions:
+                predicted_class = (
+                    predictions[0]["class"]
+                    .replace("Tomato___", "")
+                    .replace("_", " ")
+                    .strip()
+                    .lower()
+                )
 
-    if predictions:
-        predicted_class = (
-            predictions[0]["class"]
-            .replace("Tomato___", "")
-            .replace("_", " ")
-            .strip()
-            .lower()
-        )
+                disease_names = {
+                    "early blight": "Early Blight of Tomato (Alternaria solani)",
+                    "late blight": "Late Blight of Tomato (Phytophthora infestans)",
+                    "healthy": "Healthy Tomato Leaf",
+                }
 
-        DISEASE_NAMES = {
-            "early blight": "Early Blight of Tomato (Alternaria solani)",
-            "late blight": "Late Blight of Tomato (Phytophthora infestans)",
-            "healthy": "Healthy Tomato Leaf"
-        }
+                remedies = {
+                    "early blight": (
+                        "Remove severely affected leaves, avoid wetting foliage "
+                        "during irrigation, and improve airflow. Consult a local "
+                        "agricultural expert if the disease spreads."
+                    ),
+                    "late blight": (
+                        "Remove severely infected plant material safely, avoid "
+                        "prolonged leaf wetness, and consult an agricultural expert "
+                        "promptly about locally approved treatments."
+                    ),
+                    "healthy": (
+                        "No disease was identified by the model. Continue monitoring "
+                        "the plant and maintain good crop hygiene."
+                    ),
+                }
 
-        REMEDIES = {
-            "early blight": (
-                "Remove severely affected leaves, avoid wetting foliage "
-                "during irrigation, and improve airflow around plants. "
-                "Consult a local agricultural expert if the disease spreads."
-            ),
-            "late blight": (
-                "Remove severely infected plant material safely, avoid "
-                "prolonged leaf wetness, and promptly consult an agricultural "
-                "expert about suitable locally approved treatments."
-            ),
-            "healthy": (
-                "No disease was identified by the model. Continue monitoring "
-                "the plant and maintain good crop hygiene."
-            )
-        }
+                st.subheader(
+                    disease_names.get(
+                        predicted_class,
+                        "Disease identification uncertain",
+                    )
+                )
 
-        st.subheader(DISEASE_NAMES.get(
-            predicted_class, "Disease identification uncertain"
-        ))
+                st.markdown("### Recommended Remedy")
+                st.write(
+                    remedies.get(
+                        predicted_class,
+                        "No verified remedy is available. Please consult an agricultural expert.",
+                    )
+                )
 
-        st.markdown("### Recommended Remedy")
-        st.write(REMEDIES.get(
-            predicted_class,
-            "No verified remedy is available for this prediction. "
-            "Please consult an agricultural expert."
-        ))
-
-        st.warning(
-            "This is an AI-assisted prediction, not a confirmed diagnosis."
-        )
-
-    else:
-        st.warning("No prediction returned. Please try another leaf photo.")
+                st.warning(
+                    "This is an AI-assisted prediction, not a confirmed diagnosis."
+                )
+            else:
+                st.warning("No prediction returned. Please try another leaf photo.")
 
 except Exception as exc:
     st.error(f"Could not load the prediction model: {exc}")
