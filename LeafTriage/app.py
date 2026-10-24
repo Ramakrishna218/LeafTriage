@@ -6,6 +6,9 @@ from predict import load_model_and_labels, predict_image
 import socket
 from urllib.parse import urlparse
 import requests
+import numpy as np
+from tensorflow import keras
+import json
 
 
 st.set_page_config(
@@ -18,6 +21,40 @@ st.set_page_config(
 @st.cache_resource
 def get_model():
     return load_model_and_labels()
+
+@st.cache_resource
+def load_crop_model(crop_name):
+    model_files = {
+        "Tomato": ("models/tomato_model_clean.keras", "models/class_names.json"),
+        "Grape": ("models/grape_model.keras", "models/grape_class_names.json"),
+        "Paddy": ("models/paddy_model.keras", "models/paddy_class_names.json"),
+    }
+
+    model_path, labels_path = model_files[crop_name]
+    model = keras.models.load_model(model_path)
+
+    with open(labels_path, "r") as f:
+        labels = json.load(f)
+
+    return model, labels
+
+@st.cache_resource
+def load_crop_model(crop_name):
+    model_files = {
+        "Tomato": ("models/tomato_model_clean.keras", "models/class_names.json"),
+        "Grape": ("models/grape_model.keras", "models/grape_class_names.json"),
+        "Paddy": ("models/paddy_model.keras", "models/paddy_class_names.json"),
+    }
+
+    model_path, labels_path = model_files[crop_name]
+
+    model = keras.models.load_model(model_path)
+
+    with open(labels_path, "r") as f:
+        labels = json.load(f)
+
+    return model, labels
+
 
 def fetch_rows(table, params=None):
     base_url = st.secrets["SUPABASE_URL"].strip().rstrip("/")
@@ -205,75 +242,86 @@ if selected_id:
 
 # Existing tomato leaf prediction
 st.divider()
-st.header("🔬 Tomato Leaf Disease Triage")
 
-try:
-    model, labels = get_model()
+st.divider()
+st.header("🔬 AI Leaf Disease Diagnosis")
 
-    uploaded = st.file_uploader(
-        "Upload a tomato leaf photo",
-        type=["jpg", "jpeg", "png"]
-    )
+selected_crop = st.selectbox(
+    "Select crop",
+    ["Tomato", "Grape", "Paddy"]
+)
 
-    if uploaded:
-        image = Image.open(uploaded).convert("RGB")
-        st.image(image, caption="Selected leaf", use_container_width=True)
+uploaded = st.file_uploader(
+    f"Upload a {selected_crop.lower()} leaf photo",
+    type=["jpg", "jpeg", "png"],
+    key=f"leaf_upload_{selected_crop}"
+)
 
-        if st.button("Analyze leaf", type="primary"):
-            predictions = predict_image(image, model, labels)
+if uploaded:
+    image = Image.open(uploaded).convert("RGB")
+    st.image(image, caption="Uploaded leaf", use_container_width=True)
 
-            if predictions:
-                predicted_class = (
-                    predictions[0]["class"]
-                    .replace("Tomato___", "")
-                    .replace("_", " ")
-                    .strip()
-                    .lower()
-                )
+    if st.button("Analyze leaf", type="primary"):
+        try:
+            model, labels = load_crop_model(selected_crop)
 
-                disease_names = {
-                    "early blight": "Early Blight of Tomato (Alternaria solani)",
-                    "late blight": "Late Blight of Tomato (Phytophthora infestans)",
-                    "healthy": "Healthy Tomato Leaf",
-                }
+            if selected_crop == "Tomato":
+                predictions = predict_image(image, model, labels)
+                predicted_class = str(predictions[0]["class"])
+            else:
+                # Grape and Paddy models were trained at 224 x 224
+                resized = image.resize((224, 224))
+                image_array = np.asarray(resized, dtype=np.float32)
+                image_array = np.expand_dims(image_array, axis=0)
 
-                remedies = {
-                    "early blight": (
-                        "Remove severely affected leaves, avoid wetting foliage "
-                        "during irrigation, and improve airflow. Consult a local "
-                        "agricultural expert if the disease spreads."
-                    ),
-                    "late blight": (
-                        "Remove severely infected plant material safely, avoid "
-                        "prolonged leaf wetness, and consult an agricultural expert "
-                        "promptly about locally approved treatments."
-                    ),
-                    "healthy": (
-                        "No disease was identified by the model. Continue monitoring "
-                        "the plant and maintain good crop hygiene."
-                    ),
-                }
+                scores = model.predict(image_array, verbose=0)[0]
+                predicted_class = str(labels[int(np.argmax(scores))])
 
-                st.subheader(
-                    disease_names.get(
-                        predicted_class,
-                        "Disease identification uncertain",
-                    )
-                )
+            normalized = (
+                predicted_class.lower()
+                .replace("tomato___", "")
+                .replace("grape___", "")
+                .replace("paddy___", "")
+                .replace("_", " ")
+                .replace("(", "")
+                .replace(")", "")
+                .strip()
+            )
 
-                st.markdown("### Recommended Remedy")
+            guidance = DISEASE_GUIDANCE[selected_crop.lower()]
+
+            matched_key = next(
+                (
+                    key for key in guidance
+                    if key in normalized or normalized in key
+                ),
+                None
+            )
+
+            if matched_key is None:
+                st.subheader("Disease identification uncertain")
                 st.write(
-                    remedies.get(
-                        predicted_class,
-                        "No verified remedy is available. Please consult an agricultural expert.",
-                    )
-                )
-
-                st.warning(
-                    "This is an AI-assisted prediction, not a confirmed diagnosis."
+                    "No matching remedy is configured for this model label. "
+                    "Please consult an agricultural expert."
                 )
             else:
-                st.warning("No prediction returned. Please try another leaf photo.")
+                if matched_key == "healthy":
+                    st.subheader(f"Healthy {selected_crop} Leaf")
+                else:
+                    st.subheader(
+                        f"{matched_key.title()} — {selected_crop}"
+                    )
+
+                st.markdown("### Recommended Remedy")
+                st.write(guidance[matched_key])
+
+            st.warning(
+                "AI results may be incorrect. Confirm uncertain or severe "
+                "cases with a local agricultural expert."
+            )
+
+        except Exception as exc:
+            st.error(f"Could not analyze the image: {exc}")
 
 except Exception as exc:
     st.error(f"Could not load the prediction model: {exc}")
