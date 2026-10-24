@@ -63,16 +63,19 @@ def load_crop_model(crop_name):
 @st.cache_resource
 def load_crop_model(crop_name):
     model_files = {
-        "Tomato": ("models/tomato_model_clean.keras", "models/class_names.json"),
-        "Grape": ("models/grape_model.keras", "models/grape_class_names.json"),
-        "Paddy": ("models/paddy_model.keras", "models/paddy_class_names.json"),
+        "Tomato": ("tomato_model_clean.keras", "class_names.json"),
+        "Grape": ("grape_model.keras", "grape_class_names.json"),
+        "Paddy": ("paddy_model.keras", "paddy_class_names.json"),
     }
 
-    model_path, labels_path = model_files[crop_name]
+    model_file, labels_file = model_files[crop_name]
 
-    model = keras.models.load_model(model_path)
+    model_path = MODELS_DIR / model_file
+    labels_path = MODELS_DIR / labels_file
 
-    with open(labels_path, "r") as f:
+    model = keras.models.load_model(str(model_path))
+
+    with open(labels_path, "r", encoding="utf-8") as f:
         labels = json.load(f)
 
     return model, labels
