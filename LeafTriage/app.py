@@ -319,7 +319,7 @@ if uploaded:
                 "AI results may be incorrect. Confirm uncertain or severe "
                 "cases with a local agricultural expert."
             )
-except Exception as exc:
+        except Exception as exc:
             st.error(f"Could not analyze the image: {exc}")
 
 
