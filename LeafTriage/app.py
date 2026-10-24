@@ -358,7 +358,7 @@ if uploaded:
                 st.write(guidance[matched_key])
 
             
-            )
+            
         except Exception as exc:
             st.error(f"Could not analyze the image: {exc}")
 
