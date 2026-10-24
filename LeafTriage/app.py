@@ -9,6 +9,7 @@ import requests
 import numpy as np
 from tensorflow import keras
 import json
+from pathlib import Path
 
 
 st.set_page_config(
@@ -22,18 +23,30 @@ st.set_page_config(
 def get_model():
     return load_model_and_labels()
 
+BASE_DIR = Path(__file__).resolve().parent
+MODELS_DIR = BASE_DIR / "models"
+
 @st.cache_resource
 def load_crop_model(crop_name):
     model_files = {
-        "Tomato": ("models/tomato_model_clean.keras", "models/class_names.json"),
-        "Grape": ("models/grape_model.keras", "models/grape_class_names.json"),
-        "Paddy": ("models/paddy_model.keras", "models/paddy_class_names.json"),
+        "Tomato": ("tomato_model_clean.keras", "class_names.json"),
+        "Grape": ("grape_model.keras", "grape_class_names.json"),
+        "Paddy": ("paddy_model.keras", "paddy_class_names.json"),
     }
 
-    model_path, labels_path = model_files[crop_name]
+    model_file, labels_file = model_files[crop_name]
+    model_path = MODELS_DIR / model_file
+    labels_path = MODELS_DIR / labels_file
+
+    if not model_path.is_file():
+        raise FileNotFoundError(f"Model file not found: {model_path}")
+
+    if not labels_path.is_file():
+        raise FileNotFoundError(f"Label file not found: {labels_path}")
+
     model = keras.models.load_model(model_path)
 
-    with open(labels_path, "r") as f:
+    with open(labels_path, "r", encoding="utf-8") as f:
         labels = json.load(f)
 
     return model, labels
