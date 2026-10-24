@@ -357,9 +357,7 @@ if uploaded:
                 st.markdown("### Recommended Remedy")
                 st.write(guidance[matched_key])
 
-            st.warning(
-                "AI results may be incorrect. Confirm uncertain or severe "
-                "cases with a local agricultural expert."
+            
             )
         except Exception as exc:
             st.error(f"Could not analyze the image: {exc}")
