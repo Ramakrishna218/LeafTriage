@@ -60,6 +60,27 @@ def load_crop_model(crop_name):
 
     return model, labels
 
+DISEASE_GUIDANCE = {
+    "tomato": {
+        "early blight": "Remove affected leaves, avoid wetting foliage, improve airflow, and consult a local agricultural expert about approved treatments.",
+        "late blight": "Late blight can spread quickly. Remove severely infected material safely and seek local agricultural advice about approved control measures.",
+        "healthy": "No disease was identified by the model. Continue monitoring the plant and maintain good crop hygiene.",
+    },
+    "grape": {
+        "black rot": "Remove infected plant material where appropriate, improve airflow, and consult a grape-growing expert about locally approved disease management.",
+        "esca": "Consult a viticulture expert about affected vines and appropriate pruning practices. Established Esca does not have a simple curative treatment.",
+        "leaf blight": "Remove severely affected leaves where appropriate, reduce prolonged leaf wetness, and seek local advice about suitable treatment.",
+        "healthy": "No disease was identified by the model. Continue monitoring and maintaining vineyard hygiene.",
+    },
+    "paddy": {
+        "bacterialblight": "Use locally recommended resistant varieties and follow agricultural guidance for field and nutrient management.",
+        "blast": "Use locally recommended resistant varieties, avoid excessive nitrogen, and seek advice from an agricultural extension officer.",
+        "brownspot": "Check soil and crop nutrition, use quality seed, and consult an agricultural expert about suitable management.",
+        "tungro": "Monitor leafhopper vectors, follow local recommendations for managing infected plants, and consult an agricultural extension officer.",
+        "healthy": "No disease was identified by the model. Continue monitoring the crop.",
+    },
+}
+
 @st.cache_resource
 def load_crop_model(crop_name):
     model_files = {
