@@ -12,6 +12,15 @@ import json
 from pathlib import Path
 
 
+BASE_DIR = Path(__file__).resolve().parent
+MODELS_DIR = BASE_DIR / "models"
+
+st.write("App directory:", str(BASE_DIR))
+st.write("Models directory:", str(MODELS_DIR))
+st.write("Tomato model exists:", (MODELS_DIR / "tomato_model_clean.keras").is_file())
+st.write("Grape model exists:", (MODELS_DIR / "grape_model.keras").is_file())
+st.write("Paddy model exists:", (MODELS_DIR / "paddy_model.keras").is_file())
+
 st.set_page_config(
     page_title="LeafTriage",
     page_icon="🌿",
